@@ -15,14 +15,14 @@ export class JogadoresController{
     async findAllPaginado(req, res){
         try{
             const { idJogador, page, limit, ordenar, direcao } = req.query
-            const resultado = await this.service.findAllPaginado(
+            const jogadores = await this.service.findAllPaginado(
                 idJogador,
                 page,
                 limit,
                 ordenar,
                 direcao
             )
-            return res.status(200).json(resultado)
+            return res.status(200).json(jogadores)
         }catch(e){
             return res.status(e.status || 500).json({ message: e.message || 'Erro interno' })
         }

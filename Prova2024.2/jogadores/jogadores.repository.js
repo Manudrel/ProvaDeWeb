@@ -2,32 +2,20 @@ import { db } from "../db/connection.js"
 
 export class JogadoresRepository{
     
-    async findAllPaginado(idJogador, page, limit, ordenar, direcao){
-        const offset = (page - 1) * limit
-        const query = db('jogadores')
+    async findAllPaginado(idJogador = undefined, page = 1, limit = 10, ordenar, direcao = 'desc'){
+        const offset = (page-1)*limit
 
-        if (idJogador !== undefined){
-            query.where('jogadores.id', idJogador)
-        }
-
-        const totalResult = await query.clone().count({ total: 'jogadores.id' }).first()
-        const data = await query
-            .clone()
+        let query = db('jogadores')
             .select('*')
-            .orderBy(ordenar, direcao)
             .limit(limit)
             .offset(offset)
-
-        const total = Number(totalResult.total)
-        return {
-            data,
-            pagination: {
-                page,
-                limit,
-                total,
-                totalPages: Math.ceil(total / limit)
-            }
+            .orderBy(ordenar, direcao)
+        
+        if (idJogador !== undefined){
+            query = query.where('jogadores.id', idJogador)
         }
+        
+        return await query
     }
 
     async findAll(){

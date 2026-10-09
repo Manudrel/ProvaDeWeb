@@ -1,7 +1,5 @@
 import { JogadoresRepository } from "./jogadores.repository.js";
 
-const colunasOrdenaveis = ['id', 'nome', 'data_nascimento', 'posicao', 'time_id']
-
 function validarDadosJogador(dados){
     if (!dados || typeof dados !== 'object' || Array.isArray(dados)){
         throw { status: 400, message: 'Dados do jogador inválidos' }
@@ -29,29 +27,30 @@ function validarDadosJogador(dados){
 export class JogadoresService{
     repo = new JogadoresRepository()
 
-    async findAllPaginado(idJogador, page = 1, limit = 10, ordenar = 'id', direcao = 'asc'){
+    async findAllPaginado(idJogador, page = 1, limit = 10, ordenar = 'id', direcao = 'desc'){
         const pageNumber = Number(page)
         const limitNumber = Number(limit)
         const sortColumn = ordenar || 'id'
-        const sortDirection = String(direcao || 'asc').toLowerCase()
+        const sortDirection = String(direcao || 'desc').toLowerCase()
+
+        if (idJogador !== undefined){
+            const jogadorId = Number(idJogador)
+            if (!Number.isInteger(jogadorId) || jogadorId <= 0){
+                throw { status: 400, message: 'Id do jogador deve ser um inteiro positivo' }
+            }
+            idJogador = jogadorId
+        }
 
         if (!Number.isInteger(pageNumber) || pageNumber < 1){
             throw { status: 400, message: 'Página deve ser um inteiro positivo' }
         }
 
-        if (!Number.isInteger(limitNumber) || limitNumber < 1 || limitNumber > 100){
-            throw { status: 400, message: 'Limite deve ser um inteiro entre 1 e 100' }
+        if (!Number.isInteger(limitNumber) || limitNumber < 1){
+            throw { status: 400, message: 'Limite deve ser um inteiro positivo' }
         }
 
-        let jogadorId
-        if (idJogador !== undefined){
-            jogadorId = Number(idJogador)
-            if (!Number.isInteger(jogadorId) || jogadorId < 1){
-                throw { status: 400, message: 'Id do jogador deve ser um inteiro positivo' }
-            }
-        }
-
-        if (!colunasOrdenaveis.includes(sortColumn)){
+        const colunasPermitidas = ['id', 'nome', 'data_nascimento', 'posicao', 'time_id']
+        if (!colunasPermitidas.includes(sortColumn)){
             throw { status: 400, message: 'Coluna de ordenação inválida' }
         }
 
@@ -60,7 +59,7 @@ export class JogadoresService{
         }
 
         return this.repo.findAllPaginado(
-            jogadorId,
+            idJogador,
             pageNumber,
             limitNumber,
             sortColumn,
