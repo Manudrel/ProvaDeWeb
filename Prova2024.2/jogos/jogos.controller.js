@@ -1,4 +1,4 @@
-import { JogosService } from "./jogos.service";
+import { JogosService } from "./jogos.service.js";
 
 export class JogosController{
     service = new JogosService()

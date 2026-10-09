@@ -1,4 +1,4 @@
-import { JogosRepository } from "./jogos.repository";
+import { JogosRepository } from "./jogos.repository.js";
 
 export class JogosService{
     repo = new JogosRepository()

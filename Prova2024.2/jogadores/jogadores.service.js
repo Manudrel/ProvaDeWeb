@@ -1,29 +1,71 @@
-import { JogadoresRepository } from "./jogadores.repository";
+import { JogadoresRepository } from "./jogadores.repository.js";
+
+const colunasOrdenaveis = ['id', 'nome', 'data_nascimento', 'posicao', 'time_id']
+
+function validarDadosJogador(dados){
+    if (!dados || typeof dados !== 'object' || Array.isArray(dados)){
+        throw { status: 400, message: 'Dados do jogador inválidos' }
+    }
+
+    const { nome, data_nascimento, posicao, time_id } = dados
+
+    if (typeof nome !== 'string' || nome.trim() === ''){
+        throw { status: 400, message: 'Nome deve ser uma string' }
+    }
+
+    if (typeof data_nascimento !== 'string' || isNaN(Date.parse(data_nascimento))){
+        throw { status: 400, message: 'Data de nascimento inválida' }
+    }
+
+    if (typeof posicao !== 'string' || posicao.trim() === ''){
+        throw { status: 400, message: 'Posição deve ser uma string' }
+    }
+
+    if (!Number.isInteger(Number(time_id)) || Number(time_id) <= 0){
+        throw { status: 400, message: 'Id do time deve ser um inteiro positivo' }
+    }
+}
 
 export class JogadoresService{
     repo = new JogadoresRepository()
 
-    async findlAllPaginado(idJogador = undefined, page, limit, ordenar, direcao){
-        
-        if(idJogador !== undefined){
-            if(isNaN(id) || Number(id)<=0){
-                throw { status: 400, message: 'Id Inválido'}
-            }
+    async findAllPaginado(idJogador, page = 1, limit = 10, ordenar = 'id', direcao = 'asc'){
+        const pageNumber = Number(page)
+        const limitNumber = Number(limit)
+        const sortColumn = ordenar || 'id'
+        const sortDirection = String(direcao || 'asc').toLowerCase()
+
+        if (!Number.isInteger(pageNumber) || pageNumber < 1){
+            throw { status: 400, message: 'Página deve ser um inteiro positivo' }
         }
-        
-        if(page){
-            if(Number(page)<=0 || isNaN(page)){
-                throw { status: 400, message: 'Página inválida'}
-            }
+
+        if (!Number.isInteger(limitNumber) || limitNumber < 1 || limitNumber > 100){
+            throw { status: 400, message: 'Limite deve ser um inteiro entre 1 e 100' }
         }
-        
-        if(limit){
-            if(Number(limit)<=0 || isNaN(limit)){
-                throw { status: 400, message: 'Limite inválido'}
+
+        let jogadorId
+        if (idJogador !== undefined){
+            jogadorId = Number(idJogador)
+            if (!Number.isInteger(jogadorId) || jogadorId < 1){
+                throw { status: 400, message: 'Id do jogador deve ser um inteiro positivo' }
             }
         }
 
-        return this.repo.findAllPaginado(idJogador, page, limit, ordenar, direcao)
+        if (!colunasOrdenaveis.includes(sortColumn)){
+            throw { status: 400, message: 'Coluna de ordenação inválida' }
+        }
+
+        if (!['asc', 'desc'].includes(sortDirection)){
+            throw { status: 400, message: 'Direção deve ser asc ou desc' }
+        }
+
+        return this.repo.findAllPaginado(
+            jogadorId,
+            pageNumber,
+            limitNumber,
+            sortColumn,
+            sortDirection
+        )
     }
 
     async findAll(){
@@ -31,77 +73,46 @@ export class JogadoresService{
     }
 
     async findById(id){
-        if(isNaN(id) || Number(id)<=0){
-            throw { status: 400, message: 'Id Inválido'}
+        const jogadorId = Number(id)
+        if (!Number.isInteger(jogadorId) || jogadorId <= 0){
+            throw { status: 400, message: 'Id inválido' }
         }
-        return this.repo.findById(Number(id));
+        return this.repo.findById(jogadorId)
     }
 
     async create(dados){
-        const { nome, data_nascimento, posicao, time_id} = dados
-
-        if(!nome || nome.trim()==='' || typeof nome !== 'string'){
-            throw { status: 400, message: 'Nome deve ser uma string'}
-        }
-
-        if(!data_nascimento || typeof data_nascimento !== 'string' || isNaN(Date.parse(data_nascimento))){
-            throw { status: 400, message: 'Data de nascimento inválida' }
-        }
-        
-        if(!posicao || posicao.trim()==='' || typeof posicao !== 'string'){
-            throw { status: 400, message: 'Posição deve ser uma string'}
-        }
-
-        if(!time_id || Number(time_id)<=0 || isNaN(time_id)){
-            throw { status: 400, message: 'Id do time deve ser um inteiro não nulo positivo'}
-        }
-
-        return this.repo.create(nome, data_nascimento, posicao, time_id)
+        validarDadosJogador(dados)
+        const { nome, data_nascimento, posicao, time_id } = dados
+        return this.repo.create(nome, data_nascimento, posicao, Number(time_id))
     }
 
     async update(id, dados){
-        if(isNaN(id) || Number(id)<=0){
-            throw { status: 400, message: 'Id Inválido'}
-        }
-        
-        const jogadorExistente = this.repo.findById(id)
-        
-        if(!jogadorExistente){
-            throw{status: 404, message: 'Jogador não existente'}
+        const jogadorId = Number(id)
+        if (!Number.isInteger(jogadorId) || jogadorId <= 0){
+            throw { status: 400, message: 'Id inválido' }
         }
 
-        const { nome, data_nascimento, posicao, time_id} = dados
-
-        if(!nome || nome.trim()==='' || typeof nome !== 'string'){
-            throw { status: 400, message: 'Nome deve ser uma string'}
+        const jogadorExistente = await this.repo.findById(jogadorId)
+        if (!jogadorExistente){
+            throw { status: 404, message: 'Jogador não existente' }
         }
 
-        if(!data_nascimento || typeof data_nascimento !== 'string' || isNaN(Date.parse(data_nascimento))){
-            throw { status: 400, message: 'Data de nascimento inválida' }
-        }
-        
-        if(!posicao || posicao.trim()==='' || typeof posicao !== 'string'){
-            throw { status: 400, message: 'Posição deve ser uma string'}
-        }
-
-        if(!time_id || Number(time_id)<=0 || isNaN(time_id)){
-            throw { status: 400, message: 'Id do time deve ser um inteiro não nulo positivo'}
-        }
-
-        return this.repo.update(id, dados)
+        validarDadosJogador(dados)
+        const dadosNormalizados = { ...dados, time_id: Number(dados.time_id) }
+        return this.repo.update(jogadorId, dadosNormalizados)
     }
 
     async delete(id){
-        if(isNaN(id) || Number(id)<=0){
-            throw { status: 400, message: 'Id Inválido'}
-        }
-        
-        const jogadorExistente = this.repo.findById(id)
-        
-        if(!jogadorExistente){
-            throw{status: 404, message: 'Jogador não existente'}
+        const jogadorId = Number(id)
+        if (!Number.isInteger(jogadorId) || jogadorId <= 0){
+            throw { status: 400, message: 'Id inválido' }
         }
 
-        return this.repo.delete(id)
+        const jogadorExistente = await this.repo.findById(jogadorId)
+        if (!jogadorExistente){
+            throw { status: 404, message: 'Jogador não existente' }
+        }
+
+        return this.repo.delete(jogadorId)
     }
 }
