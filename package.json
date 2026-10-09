@@ -1,7 +1,8 @@
 {
   "type": "module",
   "scripts": {
-    "start": "node Prova2024.2/index.js"
+    "start": "node Prova2024.2/index.js",
+    "start:2024.1": "node Prova2024.1/index.js"
   },
   "dependencies": {
     "express": "^5.2.1",
